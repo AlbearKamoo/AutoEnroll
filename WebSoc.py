@@ -1,5 +1,8 @@
 from splinter import Browser
+import time
 import urllib.request
+import urllib.parse
+import requests
 
 
 class WebSoc:
@@ -28,13 +31,14 @@ class WebSoc:
 
     def check_courses(self, courses: dict):
         course_list = []
-        data = self.browser.find_by_css('tr[valign="top"][bgcolor="#FFFFCC"')
+        data = self.browser.find_by_css('tr[valign="top"]')
         for i in data:
-            print(i.text)
             course_list.append(i.find_by_css('td'))
         for j in course_list:
-            print(j[0].text, end ='   ')
-            print(j[-1].text)      
+            if j[0].text in courses:
+                print(j[0].text, end ='   ')
+                print(j[9].text, end ='  ')
+                print(j[-1].text)      
 
             
 ##    def __setattr__(self, name, value):
@@ -46,9 +50,25 @@ class WebSoc:
     
 
 
+
 test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
-if test.dept_classes('ARTS'):
+if test.dept_classes('I&C SCI'):
     if test.submit():
-        test.check_courses([1])
+        for i in range(5000):
+            test.check_courses(['36680','36681', '36691' ])
+            time.sleep(5)
+            test.browser.reload()
+            print('reloaded')
+test.browser.quit()
+
+##values = {"Dept": "ARTS"}
+##data = urllib.parse.urlencode(values)
+##data = data.encode('ascii')
+##request = urllib.request.Request("https://www.reg.uci.edu/perl/WebSoc", data)
+##with (urllib.request.urlopen(req)) as response:
+##        result = response.readlines()
+##for i in result:
+##    print(i)
+
             
 
