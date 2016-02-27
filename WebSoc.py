@@ -2,6 +2,7 @@ from splinter import Browser
 from collections import defaultdict
 import itertools
 import time
+import webreg
 
 
 class WebSoc:
@@ -9,6 +10,7 @@ class WebSoc:
         self.browser = Browser('chrome')
         self.browser.visit(URL)
         self.data = ''
+        self.userdata = ('####', '####')
         self.courses = [[]]
         self.course_list = []
         self.enrolled = []
@@ -58,29 +60,33 @@ class WebSoc:
                         enroll_list.append(l)
                         break
 
-        self.enroll(enroll_list)                
+        webreg_browser = webreg.login(self.userdata[0], self.userdata[1])
+        self.enroll(enroll_list, webreg_browser)                
                 
-    def enroll(self, enroll_list):
+    def enroll(self, enroll_list, webreg_browser):
         self.enrolled = []
         for i in enroll_list:
             print("enrolling in " + str(i))
+            webreg.enroll(webreg_browser, i)
             self.enrolled.append(i)
 
-    def check_enrolled(self) -> None:
+    def check_enrolled(self) -> bool:
         for i in self.enrolled:
             if i in self.courses:
                 self.courses.remove(i)
-        print(self.courses)
+        return len(self.courses) == 0
+        
                       
 
 test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
 try:
-    if test.dept_classes('I&C SCI', [['36450','36451'],['36691'], ['36630']]):
+    if test.dept_classes('I&C SCI', [['30500, 30503']]):
         if test.submit():
             for i in range(5000):
                 test.check_courses()
                 time.sleep(10)
-                test.check_enrolled()
+                if test.check_enrolled():
+                    break
                 test.browser.reload()
                 print('reloaded')
 except Exception as e:

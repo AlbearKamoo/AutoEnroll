@@ -22,10 +22,7 @@ def enroll(browser, courselist):
             browser.fill("courseCode", courseId)
             browser.find_by_css('input[value = "Send Request"]').first.click()
         browser.find_by_value("Logout").first.click()
+    browser.quit()
 
 
 
-
-b = login('####################','#################')
-
-enroll(b, ["21020","21021"])
