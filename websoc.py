@@ -59,9 +59,9 @@ class WebSoc:
                     if self.class_status[l[c]] == 'OPEN':
                         enroll_list.append(l)
                         break
-
-        webreg_browser = webreg.login(self.userdata[0], self.userdata[1])
-        self.enroll(enroll_list, webreg_browser)                
+        if enroll_list:
+            webreg_browser = webreg.login(self.userdata[0], self.userdata[1])
+            self.enroll(enroll_list, webreg_browser)                
                 
     def enroll(self, enroll_list, webreg_browser):
         self.enrolled = []
@@ -77,10 +77,9 @@ class WebSoc:
         return len(self.courses) == 0
         
                       
-
 test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
 try:
-    if test.dept_classes('I&C SCI', [['30500, 30503']]):
+    if test.dept_classes('PHILOS', [['30500, 30503']]):
         if test.submit():
             for i in range(5000):
                 test.check_courses()
