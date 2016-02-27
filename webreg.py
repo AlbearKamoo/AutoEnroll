@@ -25,4 +25,6 @@ def enroll(browser, courselist):
     browser.quit()
 
 
-
+if __name__ == '__main__':
+    b = login('####################','#################')
+    enroll(b, ["21020","21021"])
