@@ -2,10 +2,6 @@ from splinter import Browser
 from collections import defaultdict
 import itertools
 import time
-import urllib.request
-import urllib.parse
-import requests
-
 
 
 class WebSoc:
