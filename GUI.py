@@ -3,6 +3,7 @@ import sys
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+import websoc
 
 class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
 "AFAM . . . . . . . African American Studies" : "AFAM",
@@ -146,44 +147,51 @@ class Main(QWidget):
           self.username = username
           self.password = password
 
+          # Grid layout setup
           grid = QGridLayout()
           self.setLayout(grid)
 
+          # Widget setup
           course_list = list(class_dict.keys())
           course_list.sort()
-          dept_combo = QComboBox(self)
-          dept_combo.addItems(course_list)
+          self.dept_combo = QComboBox(self)
+          self.dept_combo.addItems(course_list)
 
-          dept_label = QLabel("Select Department: ")
+          self.dept_label = QLabel("Select Department: ")
           
           # Main user input 
-          class_label = QLabel("Class codes (separated by commas): ")
+          self.class_label = QLabel("Class codes (separated by commas): ")
           self.class_input = QLineEdit()
    
-          enroll_button = QPushButton("Start bot")
+          self.enroll_button = QPushButton("Start bot")
 
           # Button events
-          enroll_button.clicked.connect(self.enroll)
+          self.enroll_button.clicked.connect(self.enroll)
 
-          grid.addWidget(dept_label, 0, 0, 1, 1)
-          grid.addWidget(dept_combo, 0, 1, 1, 3)
-          grid.addWidget(class_label, 1, 0, 1, 2)
+          # Adds Widgets to Grid
+          grid.addWidget(self.dept_label, 0, 0, 1, 1)
+          grid.addWidget(self.dept_combo, 0, 1, 1, 3)
+          grid.addWidget(self.class_label, 1, 0, 1, 2)
           grid.addWidget(self.class_input, 1, 2, 1, 2)
+          grid.addWidget(self.enroll_button, 2, 2)
 
           self.setWindowTitle("AutoEnroll")
           self.setGeometry(400, 400, 500, 200)
           
 
      def enroll(self):
-          pass
+          selected_dept = str(self.dept_combo.currentText())
+          
 
 class LoginWindow(QWidget):
      def __init__(self):
           super().__init__()
 
+          # Grid layout setup
           grid = QGridLayout()
           self.setLayout(grid)
 
+          # Widget setup
           self.title_label = QLabel("Login")
           self.title_label.setAlignment(Qt.AlignCenter)
           
@@ -196,24 +204,30 @@ class LoginWindow(QWidget):
 
           self.OK_button = QPushButton("OK")
 
+          self.warning_label = QLabel("NOTE: When OK is pressed a quick login test will start.\nPlease wait until the test is finished to continue!")
+
+          # Button events
           self.OK_button.clicked.connect(self.submit)
-          
-          grid.addWidget(self.title_label, 0, 0, 1, 2)
+
+          # Adds Widgets to Grid
+          grid.addWidget(self.title_label, 0, 0, 1, 3)
           grid.addWidget(self.username_label, 1, 0)
-          grid.addWidget(self.username_input, 1, 1)
+          grid.addWidget(self.username_input, 1, 1, 1, 2)
           grid.addWidget(self.password_label, 2, 0)
-          grid.addWidget(self.password_input, 2, 1)
-          grid.addWidget(self.OK_button, 3, 1)
+          grid.addWidget(self.password_input, 2, 1, 1, 2)
+          grid.addWidget(self.OK_button, 3, 2)
+          grid.addWidget(self.warning_label, 4, 0, 2, 3)
 
      def submit(self):
-          ''' Creates a new window with the truth table information for the inputs provided in the main window. '''
           # Try/except block for debugging purposes, may remove later
           username = str(self.username_input.text())
           password = str(self.password_input.text())
-         
-          self.main_window = Main(username, password)
-          self.main_window.show()
-          self.close()
+          try:
+               self.main_window = Main(username, password)
+               self.main_window.show()
+               self.close()
+          except Exception as e:
+               print(e)
           
 
 if __name__ == '__main__':
