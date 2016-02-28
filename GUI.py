@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import websoc
+import webreg
 
 class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
 "AFAM . . . . . . . African American Studies" : "AFAM",
@@ -223,9 +224,14 @@ class LoginWindow(QWidget):
           username = str(self.username_input.text())
           password = str(self.password_input.text())
           try:
-               self.main_window = Main(username, password)
-               self.main_window.show()
-               self.close()
+               browser = webreg.login(username, password)
+               if webreg.login_check(browser):
+                    browser.quit()
+                    self.main_window = Main(username, password)
+                    self.main_window.show()
+                    self.close()
+               else:
+                    QMessageBox.about(self, "Invalid login", "The username and password combination you have entered is invalid. Please try again.")
           except Exception as e:
                print(e)
           
