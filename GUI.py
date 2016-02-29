@@ -1,11 +1,13 @@
 # I chose the PyQt grid layout
 import sys
 import time
+from collections import defaultdict
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import websoc
 import webreg
+
 
 # Dictionary containing WebSoc string representations as keys, and the corresponding form data as values
 class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
@@ -157,13 +159,17 @@ class Main(QWidget):
           
           super().__init__()
 
-          # Stores user information
+          # Stores user information and initialiazes internal attributes
           self.username = username
           self.password = password
+          self.course_count = 0
+          self.input_list = []
+          self.course_list = []
+          self.discussions = defaultdict(QLineEdit)
 
           # Grid layout setup
-          grid = QGridLayout()
-          self.setLayout(grid)
+          self.grid = QGridLayout()
+          self.setLayout(self.grid)
 
           # Widget setup
           course_list = list(class_dict.keys())
@@ -172,27 +178,69 @@ class Main(QWidget):
           self.dept_combo.addItems(course_list)
 
           self.dept_label = QLabel("Select Department: ")
-          
-          # Main user input 
-          self.class_label = QLabel("Class codes (separated by commas): ")
-          self.class_input = QLineEdit()
    
+          
+          self.add_class_button = QPushButton("Add class")
+          self.add_class_button.setFixedWidth(110)
           self.enroll_button = QPushButton("Start bot")
+          self.enroll_button.setFixedWidth(150)
 
           # Button events
           self.enroll_button.clicked.connect(self.enroll)
+          self.add_class_button.clicked.connect(self.add_course)
 
           # Adds Widgets to Grid
-          grid.addWidget(self.dept_label, 0, 0, 1, 1)
-          grid.addWidget(self.dept_combo, 0, 1, 1, 3)
-          grid.addWidget(self.class_label, 1, 0, 1, 2)
-          grid.addWidget(self.class_input, 1, 2, 1, 2)
-          grid.addWidget(self.enroll_button, 2, 2)
+          self.grid.addWidget(self.dept_label, 0, 0)
+          self.grid.addWidget(self.dept_combo, 0, 1, 1, 4)
+          self.grid.addWidget(self.add_class_button, 1, 2)
+          self.grid.addWidget(self.enroll_button, 2, 4)
 
           # Sets window's properties
           self.setWindowTitle("AutoEnroll")
           self.setGeometry(400, 400, 500, 200)
+          self.grid.setColumnMinimumWidth(3, 100)
+          self.grid.setColumnMinimumWidth(4, 100)
           
+
+     def add_course(self):
+          self.course_count += 1
+          self.course_label = QLabel("Class " + str(self.course_count)+": ")
+          self.course_label.setAlignment(Qt.AlignRight)
+          self.course_input = QLineEdit()
+          self.discussion_check = QCheckBox("Discussions?")
+          self.discussion_check.stateChanged.connect(self.add_discussion) 
+          
+
+          self.grid.addWidget(self.course_label, self.course_count, 0)
+          self.grid.addWidget(self.course_input, self.course_count, 1, 1, 1)
+          self.grid.addWidget(self.discussion_check, self.course_count, 2, 1, 1)
+
+          self.grid.removeWidget(self.enroll_button)
+          self.grid.removeWidget(self.add_class_button)
+          self.grid.addWidget(self.add_class_button, self.course_count + 1, 2)
+          self.grid.addWidget(self.enroll_button, self.course_count + 2, 4)
+
+          self.input_list.append(self.course_input)
+
+     def add_discussion(self):
+          try:
+               index = self.grid.indexOf(self.sender())
+               position = self.grid.getItemPosition(index)
+               if self.sender().isChecked():
+                    if position[0] in self.discussions.keys():
+                         self.discussions[position[0]].show()
+                    else:
+                         discussion_input = QLineEdit()
+                         self.grid.addWidget(discussion_input, position[0], position[1] + 1, 1, 2)
+                         self.discussions[position[0]] = discussion_input
+                    print(self.discussions)
+               else:
+                    print(self.discussions[position[0]])
+                    self.discussions[position[0]].hide()
+                    
+          except Exception as e:
+               print(e)
+               
 
      def enroll(self):
 
@@ -280,8 +328,11 @@ class LoginWindow(QWidget):
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     login_window = LoginWindow()
-     login_window.show()
+     #login_window = LoginWindow()
+     #login_window.show()
+     main_window = Main('john', 'abba')
+     main_window.show()
+     
 
      sys.exit(app.exec_())
 
