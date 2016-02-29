@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 import websoc
 import webreg
 
+# Dictionary containing WebSoc string representations as keys, and the corresponding form data as values
 class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
 "AFAM . . . . . . . African American Studies" : "AFAM",
 "ANATOMY . . . .Anatomy and Neurobiology" : "ANATOMY",
@@ -116,7 +117,7 @@ class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" :
 "PM&R . . . . . . .Physical Medicine and Rehabilitation" : "PM&R",
 "POL SCI . . . . . Political Science" : "POL SCI",
 "PORTUG . . . . . Portuguese" : "PORTUG",
-"PP&amp;D . . . . . . . Planning, Policy, and Design" : "PP&amp;D",
+"PP&D . . . . . . . Planning, Policy, and Design" : "PP&D",
 "PSY BEH . . . . .Psychology and Social Behavior" : "PSY BEH",
 "PSYCH . . . . . . Cognitive Sciences" : "PSYCH",
 "PUB POL . . . . .Public Policy (started 2013 Wtr)" : "PUB POL",
@@ -144,8 +145,19 @@ class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" :
 "WRITING . . . . . Writing" : "WRITING"}
 
 class Main(QWidget):
+     ''' Main platform for handling auto enrollment configuration and launch. '''
+     
      def __init__(self, username, password):
+          ''' Initiates the Main window and builds its layout.
+
+          keyword arguments:
+          username -- user's UCINetID
+          password -- user's UCINet password
+          '''
+          
           super().__init__()
+
+          # Stores user information
           self.username = username
           self.password = password
 
@@ -177,28 +189,39 @@ class Main(QWidget):
           grid.addWidget(self.class_input, 1, 2, 1, 2)
           grid.addWidget(self.enroll_button, 2, 2)
 
+          # Sets window's properties
           self.setWindowTitle("AutoEnroll")
           self.setGeometry(400, 400, 500, 200)
           
 
      def enroll(self):
+
+          # Current form of course code input, will change later!
+          # Builds a list of lists of strings from the user input
           course_nested = []
-          dept = class_dict[str(self.dept_combo.currentText())]
-          print(dept)
           courses = str(self.class_input.text()).split(',')
           for i in courses:
                course_nested.append([i.strip()])
+          
+          dept = class_dict[str(self.dept_combo.currentText())]
+          
+          # Print statements for debugging purposes
+          print(dept)
           print(course_nested)
+          
           try:
-               enroll_bot = websoc.WebSoc("https://www.reg.uci.edu/perl/WebSoc", dept, course_nested, self.username, self.password)
-               self.close()
-               if enroll_bot.get_search_results():
-                    for i in range(40):
-                         enroll_bot.check_courses()
+               enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
+               self.close() # Closes Main window and leaves bot running in background
+               
+               soup = enroll_bot.get_search_results()
+               if soup.find_all('li')[0].text == "Department: " + dept: #Checks if the post request retrieved the right data
+                    # MAIN ROUTINE: continously checks course status until course list is empty
+                    while enroll_bot.check_enrolled() == False:
+                         enroll_bot.check_courses(soup)
                          time.sleep(10)
-                         if enroll_bot.check_enrolled():
-                              break
                          print('rechecking')
+               else:
+                    print("Error with POST request retrieval. Please contact an administrator :p")
           except Exception as e:
               print(e)
               self.close()
