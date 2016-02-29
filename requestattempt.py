@@ -6,8 +6,7 @@ def generate_info(website, requirements):
     #requirements = dictionary of the form
     requirements = requirements
     request = requests.post(website,requirements)
-    with open('download_stuff2.html', 'w') as d:
-        d.write(request.content)
+    print(request.text)
 
 
 #Must fill out all parts of the form in order to interact with a form on HTML

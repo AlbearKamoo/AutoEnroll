@@ -1,5 +1,6 @@
 # I chose the PyQt grid layout
 import sys
+import time
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -181,8 +182,26 @@ class Main(QWidget):
           
 
      def enroll(self):
-          selected_dept = str(self.dept_combo.currentText())
-          
+          course_nested = []
+          dept = class_dict[str(self.dept_combo.currentText())]
+          print(dept)
+          courses = str(self.class_input.text()).split(',')
+          for i in courses:
+               course_nested.append([i.strip()])
+          print(course_nested)
+          try:
+               enroll_bot = websoc.WebSoc("https://www.reg.uci.edu/perl/WebSoc", dept, course_nested, self.username, self.password)
+               self.close()
+               if enroll_bot.get_search_results():
+                    for i in range(40):
+                         enroll_bot.check_courses()
+                         time.sleep(10)
+                         if enroll_bot.check_enrolled():
+                              break
+                         print('rechecking')
+          except Exception as e:
+              print(e)
+              self.close()
 
 class LoginWindow(QWidget):
      def __init__(self):
@@ -226,7 +245,6 @@ class LoginWindow(QWidget):
           try:
                browser = webreg.login(username, password)
                if webreg.login_check(browser):
-                    browser.quit()
                     self.main_window = Main(username, password)
                     self.main_window.show()
                     self.close()

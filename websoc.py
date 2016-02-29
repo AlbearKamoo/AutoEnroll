@@ -1,49 +1,60 @@
-from splinter import Browser
+from bs4 import BeautifulSoup
 from collections import defaultdict
+import requests
 import itertools
 import time
 import webreg
 
 
 class WebSoc:
-    def __init__(self, URL: str) -> None:
-        self.browser = Browser('chrome')
-        self.browser.visit(URL)
+    def __init__(self, URL: str, dept: str,  courses: [[]], username: str, password: str) -> None:
+        self.form_data = {'YearTerm' : '2016-14',
+         'Breadth' : 'ANY',
+         'Dept' : dept,
+         'CourseNum' : '',
+         'Division' : 'ANY',
+         'CourseCodes' : '',
+         'InstrName' : '',
+         'CourseTitle' : '',
+         'ClassType' : 'ANY',
+         'Units' : '',
+         'Days' : '',
+         'StartTime' : '',
+         'EndTime' : '',
+         'FullCourses' : 'ANY',
+         'FontSize' : '100',
+         'CancelledCourses' : 'Exclude',
+         'Bldg' : '',
+         'Room' : '',
+         }
+        
+        self.URL = URL
         self.data = ''
-        self.userdata = ('####', '####')
-        self.courses = [[]]
+        self.userdata = (username, password)
+        self.courses = courses
         self.course_list = []
         self.enrolled = []
 
-    def dept_classes(self, department: str, courses: [[str]]) -> bool:
-        self.courses = courses
+    def get_search_results(self):
         try:
-            self.browser.select('Dept', department)
+            request = requests.post(self.URL ,self.form_data)
+            self.soup = BeautifulSoup(request.content, "html.parser")
             return True
-        except Exception as e:
-            print(e)
+        except:
             return False
-
-    def submit(self) -> bool:
-        try:
-            button = self.browser.find_by_name('Submit')[0]
-            button.click()
-            return True
-        except Exception as e:
-            print(e)
-            return False
+        
         
     def check_courses(self) -> None:
         self.course_list = []
-        data = self.browser.find_by_css('tr[valign="top"]')
+        data = self.soup.select('tr[valign="top"]')
         for i in data:
-            self.course_list.append(i.find_by_css('td'))
+            self.course_list.append(i.select('td'))
         
         self.class_status = defaultdict(str)
         for i in self.course_list:
             if i[0].text in itertools.chain.from_iterable(self.courses):
                 print(i[0].text, end ='   ')
-                print(i[9].text, end ='  ')
+                print(i[8].text, end ='  ')
                 print(i[-1].text)
                 self.class_status[i[0].text] = i[-1].text
 
@@ -59,16 +70,20 @@ class WebSoc:
                     if self.class_status[l[c]] == 'OPEN':
                         enroll_list.append(l)
                         break
+        print(enroll_list)
+
         if enroll_list:
             webreg_browser = webreg.login(self.userdata[0], self.userdata[1])
-            self.enroll(enroll_list, webreg_browser)                
+            if webreg_browser.find_by_css('div[class="DivLogoutMsg"]'):
+                print("Currently unable to access Webreg. Your account may be in use, or the system may not have updated yet.")
+                webreg_browser.quit()
+            else:
+                self.enroll(enroll_list, webreg_browser)                
                 
     def enroll(self, enroll_list, webreg_browser):
-        self.enrolled = []
-        for i in enroll_list:
-            print("enrolling in " + str(i))
-            webreg.enroll(webreg_browser, i)
-            self.enrolled.append(i)
+        print("enrolling in " + str(enroll_list))
+        webreg.enroll(webreg_browser, itertools.chain.from_iterable(enroll_list))
+        self.enrolled = enroll_list
 
     def check_enrolled(self) -> bool:
         for i in self.enrolled:
@@ -77,20 +92,17 @@ class WebSoc:
         return len(self.courses) == 0
         
 if __name__ == "__main__":                      
-    test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
+    test = WebSoc("https://www.reg.uci.edu/perl/WebSoc", "PHILOS", [['30500', '30503'], ['30640']], "#####", "#####")
     try:
-        if test.dept_classes('PHILOS', [['30500, 30503']]):
-            if test.submit():
-                for i in range(5000):
-                    test.check_courses()
-                    time.sleep(10)
-                    if test.check_enrolled():
-                        break
-                    test.browser.reload()
-                    print('reloaded')
+        if test.get_search_results():
+            for i in range(40):
+                test.check_courses()
+                time.sleep(10)
+                if test.check_enrolled():
+                    break
+                print('rechecking')
     except Exception as e:
         print(e)
-    test.browser.quit()
 
             
 
