@@ -76,21 +76,21 @@ class WebSoc:
                 self.courses.remove(i)
         return len(self.courses) == 0
         
-                      
-test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
-try:
-    if test.dept_classes('PHILOS', [['30500, 30503']]):
-        if test.submit():
-            for i in range(5000):
-                test.check_courses()
-                time.sleep(10)
-                if test.check_enrolled():
-                    break
-                test.browser.reload()
-                print('reloaded')
-except Exception as e:
-    print(e)
-test.browser.quit()
+if __name__ == "__main__":                      
+    test = WebSoc("https://www.reg.uci.edu/perl/WebSoc")
+    try:
+        if test.dept_classes('PHILOS', [['30500, 30503']]):
+            if test.submit():
+                for i in range(5000):
+                    test.check_courses()
+                    time.sleep(10)
+                    if test.check_enrolled():
+                        break
+                    test.browser.reload()
+                    print('reloaded')
+    except Exception as e:
+        print(e)
+    test.browser.quit()
 
             
 
