@@ -172,39 +172,49 @@ class Main(QWidget):
           self.setLayout(self.grid)
 
           # Widget setup
-          course_list = list(class_dict.keys())
+          course_list = list(dept_dict.keys())
           course_list.sort()
           self.dept_combo = QComboBox(self)
           self.dept_combo.addItems(course_list)
 
           self.dept_label = QLabel("Select Department: ")
+          self.dept_label.setAlignment(Qt.AlignRight)
           
           self.add_class_button = QPushButton("Add class")
           self.add_class_button.setFixedWidth(110)
           self.enroll_button = QPushButton("Start bot")
           self.enroll_button.setFixedWidth(150)
 
-          # Button events
+          self.time_check = QCheckBox("Set enrollment time")
+
+          self.enroll_time = QTimeEdit()
+          self.enroll_time.hide()
+          
+          # Events and signals
           self.enroll_button.clicked.connect(self.enroll)
           self.add_class_button.clicked.connect(self.add_course)
+          self.time_check.stateChanged.connect(self.add_time)
 
           # Adds Widgets to Grid
           self.grid.addWidget(self.dept_label, 0, 0)
           self.grid.addWidget(self.dept_combo, 0, 1, 1, 4)
           self.grid.addWidget(self.add_class_button, 1, 2)
+          self.grid.addWidget(self.time_check, 2, 0)
+          self.grid.addWidget(self.enroll_time, 2, 1)
           self.grid.addWidget(self.enroll_button, 2, 4)
+          
 
           # Sets window's properties
           self.setWindowTitle("AutoEnroll")
           self.setGeometry(400, 400, 500, 200)
-          self.grid.setColumnMinimumWidth(3, 100)
+          self.grid.setColumnMinimumWidth(3, 75)
           self.grid.setColumnMinimumWidth(4, 100)
           
 
      def add_course(self):
           ''' Adds a text field for course code and a discussion checkbox as a row in the layout '''
 
-          # Variable for tracking row number (number of class fields added)
+          # Attribute for tracking row number (number of class fields added)
           self.course_count += 1
 
           # widget setup
@@ -219,11 +229,16 @@ class Main(QWidget):
           self.grid.addWidget(self.course_input, self.course_count, 1, 1, 1)
           self.grid.addWidget(self.discussion_check, self.course_count, 2, 1, 1)
 
-          # Shifts add class and start buttons down a row
-          self.grid.removeWidget(self.enroll_button)
+          # Shifts time options, add class button, and start button down a row
+          self.grid.removeWidget(self.time_check)
+          self.grid.removeWidget(self.enroll_time)
           self.grid.removeWidget(self.add_class_button)
+          self.grid.removeWidget(self.enroll_button)
+          self.grid.addWidget(self.time_check, self.course_count + 2, 0)
+          self.grid.addWidget(self.enroll_time, self.course_count +2, 1)
           self.grid.addWidget(self.add_class_button, self.course_count + 1, 2)
           self.grid.addWidget(self.enroll_button, self.course_count + 2, 4)
+          
 
           # Stores input field and checkbox into their respective object lists
           self.input_list.append(self.course_input)
@@ -249,6 +264,12 @@ class Main(QWidget):
                     self.discussions[position[0]].hide()
           except Exception as e:
                print(e)
+
+     def add_time(self):
+          if self.sender().isChecked():
+               self.enroll_time.show()
+          else:
+               self.enroll_time.hide()
                
 
      def enroll(self):
@@ -337,6 +358,7 @@ class LoginWindow(QWidget):
                if webreg.login_check(browser):
                     self.main_window = Main(username, password)
                     self.main_window.show()
+                    self.main_window.activateWindow()
                     self.close()
                else:
                     QMessageBox.about(self, "Invalid login", "The username and password combination you have entered is invalid. Please try again.")
@@ -347,8 +369,8 @@ class LoginWindow(QWidget):
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     login_window = LoginWindow()
-     login_window.show()
+     #login_window = LoginWindow()
+     #login_window.show()
      main_window = Main('john', 'abba')
      main_window.show()
      
