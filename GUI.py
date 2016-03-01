@@ -1,4 +1,3 @@
-# I chose the PyQt grid layout
 import sys
 import time
 from collections import defaultdict
@@ -147,7 +146,7 @@ class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" :
 "WRITING . . . . . Writing" : "WRITING"}
 
 class Main(QWidget):
-     ''' Main platform for handling auto enrollment configuration and launch. '''
+     ''' Main GUI platform for handling auto enrollment configuration and launch. '''
      
      def __init__(self, username, password):
           ''' Initiates the Main window and builds its layout.
@@ -164,6 +163,7 @@ class Main(QWidget):
           self.password = password
           self.course_count = 0
           self.input_list = []
+          self.checkbox_list = []
           self.course_list = []
           self.discussions = defaultdict(QLineEdit)
 
@@ -221,6 +221,7 @@ class Main(QWidget):
           self.grid.addWidget(self.enroll_button, self.course_count + 2, 4)
 
           self.input_list.append(self.course_input)
+          self.checkbox_list.append(self.discussion_check)
 
      def add_discussion(self):
           try:
@@ -233,9 +234,7 @@ class Main(QWidget):
                          discussion_input = QLineEdit()
                          self.grid.addWidget(discussion_input, position[0], position[1] + 1, 1, 2)
                          self.discussions[position[0]] = discussion_input
-                    print(self.discussions)
                else:
-                    print(self.discussions[position[0]])
                     self.discussions[position[0]].hide()
                     
           except Exception as e:
@@ -243,20 +242,23 @@ class Main(QWidget):
                
 
      def enroll(self):
-
-          # Current form of course code input, will change later!
+     
           # Builds a list of lists of strings from the user input
           course_nested = []
-          courses = str(self.class_input.text()).split(',')
-          for i in courses:
-               course_nested.append([i.strip()])
+          for i in range(len(self.input_list)):
+               course_nested.append([self.input_list[i].text().strip()])
+               index = self.grid.indexOf(self.input_list[i])
+               position = self.grid.getItemPosition(index)
+               if position[0] in self.discussions.keys() and self.checkbox_list[i].isChecked():
+                    discussion_input = self.discussions[position[0]].text().split(',')
+                    course_nested[i].extend([x.strip() for x in discussion_input])
           
           dept = class_dict[str(self.dept_combo.currentText())]
           
           # Print statements for debugging purposes
           print(dept)
           print(course_nested)
-          
+
           try:
                enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
                self.close() # Closes Main window and leaves bot running in background
