@@ -9,7 +9,7 @@ import webreg
 
 
 # Dictionary containing WebSoc string representations as keys, and the corresponding form data as values
-class_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
+dept_dict = {"AC ENG . . . . . .Academic English and ESL (started 2012 Fall)" : "AC ENG",
 "AFAM . . . . . . . African American Studies" : "AFAM",
 "ANATOMY . . . .Anatomy and Neurobiology" : "ANATOMY",
 "ANESTH . . . . . Anesthesiology" : "ANESTH",
@@ -178,7 +178,6 @@ class Main(QWidget):
           self.dept_combo.addItems(course_list)
 
           self.dept_label = QLabel("Select Department: ")
-   
           
           self.add_class_button = QPushButton("Add class")
           self.add_class_button.setFixedWidth(110)
@@ -203,31 +202,43 @@ class Main(QWidget):
           
 
      def add_course(self):
+          ''' Adds a text field for course code and a discussion checkbox as a row in the layout '''
+
+          # Variable for tracking row number (number of class fields added)
           self.course_count += 1
+
+          # widget setup
           self.course_label = QLabel("Class " + str(self.course_count)+": ")
           self.course_label.setAlignment(Qt.AlignRight)
           self.course_input = QLineEdit()
           self.discussion_check = QCheckBox("Discussions?")
           self.discussion_check.stateChanged.connect(self.add_discussion) 
           
-
+          # Adding widgets to layout
           self.grid.addWidget(self.course_label, self.course_count, 0)
           self.grid.addWidget(self.course_input, self.course_count, 1, 1, 1)
           self.grid.addWidget(self.discussion_check, self.course_count, 2, 1, 1)
 
+          # Shifts add class and start buttons down a row
           self.grid.removeWidget(self.enroll_button)
           self.grid.removeWidget(self.add_class_button)
           self.grid.addWidget(self.add_class_button, self.course_count + 1, 2)
           self.grid.addWidget(self.enroll_button, self.course_count + 2, 4)
 
+          # Stores input field and checkbox into their respective object lists
           self.input_list.append(self.course_input)
           self.checkbox_list.append(self.discussion_check)
 
      def add_discussion(self):
+          ''' Hides or shows text field for discussion course codes according to checkbox status'''
+          
           try:
+               # Gets position of the checkbox that sent the signal
                index = self.grid.indexOf(self.sender())
                position = self.grid.getItemPosition(index)
+               # Hides or shows LineEdit object at the corresponding row according to the sender's status
                if self.sender().isChecked():
+                    # If object is already in dict, call show, otherwise create object and add to dict
                     if position[0] in self.discussions.keys():
                          self.discussions[position[0]].show()
                     else:
@@ -236,13 +247,17 @@ class Main(QWidget):
                          self.discussions[position[0]] = discussion_input
                else:
                     self.discussions[position[0]].hide()
-                    
           except Exception as e:
                print(e)
                
 
      def enroll(self):
-     
+          ''' Condenses user's course input into a nested list of strings. This list represents
+          course codes and lecture/discussion dependencies. Later sends this list to a WebSoc handler
+          object, and runs the app's main course checking routine. This routine executes until all
+          courses are successfully enrolled in, or until the user terminates the app.
+          '''
+          
           # Builds a list of lists of strings from the user input
           course_nested = []
           for i in range(len(self.input_list)):
@@ -252,14 +267,16 @@ class Main(QWidget):
                if position[0] in self.discussions.keys() and self.checkbox_list[i].isChecked():
                     discussion_input = self.discussions[position[0]].text().split(',')
                     course_nested[i].extend([x.strip() for x in discussion_input])
-          
-          dept = class_dict[str(self.dept_combo.currentText())]
+
+          # gets the department form value using the user's selected department as the key for the department dictionary
+          dept = dept_dict[str(self.dept_combo.currentText())]
           
           # Print statements for debugging purposes
           print(dept)
           print(course_nested)
 
           try:
+               # Initiates WebSoc handler object with enrollment list and user data
                enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
                self.close() # Closes Main window and leaves bot running in background
                
@@ -330,8 +347,8 @@ class LoginWindow(QWidget):
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     #login_window = LoginWindow()
-     #login_window.show()
+     login_window = LoginWindow()
+     login_window.show()
      main_window = Main('john', 'abba')
      main_window.show()
      

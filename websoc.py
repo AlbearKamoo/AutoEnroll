@@ -119,7 +119,7 @@ class WebSoc:
         ''' Sends enroll requests to the WebReg handler module, retrieving the enrolled courses list. '''
         # Print statement for debuggin purposes
         print("enrolling in " + str(enroll_list))
-        return webreg.enroll(webreg_browser, itertools.chain.from_iterable(enroll_list))
+        return webreg.enroll(webreg_browser, enroll_list)
 
     def check_enrolled(self) -> bool:
         ''' Removes enrolled course from the object's course list.
@@ -132,9 +132,9 @@ class WebSoc:
         
 if __name__ == "__main__":
     # Test routine to be used when this module is executed independently
-    # Hastags are username and passwords fields
+    # Hashtags are username and passwords fields
     dept = "PHILOS"
-    test = WebSoc(dept, [['30500', '30503'], ['30640']], "#####", "#####")
+    test = WebSoc(dept, [['30500', '30503'], ['30640']], "mautran", "defence123")
     try:
         soup = test.get_search_results()
         if soup.find_all('li')[0].text == "Department: " + dept:
