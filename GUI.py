@@ -1,5 +1,6 @@
 import sys
-import time
+from time import sleep
+from datetime import datetime, time
 from collections import defaultdict
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -183,7 +184,7 @@ class Main(QWidget):
           self.add_class_button = QPushButton("Add class")
           self.add_class_button.setFixedWidth(110)
           self.enroll_button = QPushButton("Start bot")
-          self.enroll_button.setFixedWidth(150)
+          self.enroll_button.setFixedWidth(120)
 
           self.time_check = QCheckBox("Set enrollment time")
 
@@ -207,8 +208,8 @@ class Main(QWidget):
           # Sets window's properties
           self.setWindowTitle("AutoEnroll")
           self.setGeometry(400, 400, 500, 200)
-          self.grid.setColumnMinimumWidth(3, 75)
-          self.grid.setColumnMinimumWidth(4, 100)
+          self.grid.setColumnMinimumWidth(3, 120)
+          self.grid.setColumnMinimumWidth(4, 120)
           
 
      def add_course(self):
@@ -221,6 +222,7 @@ class Main(QWidget):
           self.course_label = QLabel("Class " + str(self.course_count)+": ")
           self.course_label.setAlignment(Qt.AlignRight)
           self.course_input = QLineEdit()
+          self.course_input.setMaxLength(5)
           self.discussion_check = QCheckBox("Discussions?")
           self.discussion_check.stateChanged.connect(self.add_discussion) 
           
@@ -275,7 +277,7 @@ class Main(QWidget):
      def enroll(self):
           ''' Condenses user's course input into a nested list of strings. This list represents
           course codes and lecture/discussion dependencies. Later sends this list to a WebSoc handler
-          object, and runs the app's main course checking routine. This routine executes until all
+          object, and calls the object's main course checking routine. This routine executes until all
           courses are successfully enrolled in, or until the user terminates the app.
           '''
           
@@ -291,6 +293,9 @@ class Main(QWidget):
 
           # gets the department form value using the user's selected department as the key for the department dictionary
           dept = dept_dict[str(self.dept_combo.currentText())]
+
+          # gets the enrollment time from the QTimeEdit field as a datetime object
+          enroll_datetime = QTime_to_datetime(self.enroll_time)
           
           # Print statements for debugging purposes
           print(dept)
@@ -300,16 +305,14 @@ class Main(QWidget):
                # Initiates WebSoc handler object with enrollment list and user data
                enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
                self.close() # Closes Main window and leaves bot running in background
-               
-               soup = enroll_bot.get_search_results()
-               if soup.find_all('li')[0].text == "Department: " + dept: #Checks if the post request retrieved the right data
-                    # MAIN ROUTINE: continously checks course status until course list is empty
-                    while enroll_bot.check_enrolled() == False:
-                         enroll_bot.check_courses(soup)
-                         time.sleep(10)
-                         print('rechecking')
-               else:
-                    print("Error with POST request retrieval. Please contact an administrator :p")
+
+               # MAIN ROUTINE: continously checks course status until course list is empty
+               while enroll_bot.check_enrolled() == False:
+                    if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
+                         enroll_bot.main_routine()
+                    else:
+                         print("Enrollment is set to begin at "+self.enroll_time.text())
+                         sleep(60)
           except Exception as e:
               print(e)
               self.close()
@@ -364,6 +367,22 @@ class LoginWindow(QWidget):
                     QMessageBox.about(self, "Invalid login", "The username and password combination you have entered is invalid. Please try again.")
           except Exception as e:
                print(e)
+
+def QTime_to_datetime(qtime) -> datetime:
+     time_string = qtime.text()
+     hour_minute = time_string[:5].split(':')
+     hours = int(hour_minute[0])
+     minutes = int(hour_minute[1])
+     if 'AM' in time_string:
+          t = time(hours, minutes)
+     else:
+          t = time(hours + 12, minutes)
+               
+     d = datetime.now().date()
+
+     return datetime.combine(d, t)
+     
+     
           
 
 if __name__ == '__main__':

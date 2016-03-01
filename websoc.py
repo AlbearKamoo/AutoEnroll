@@ -49,6 +49,7 @@ class WebSoc:
         self.data = ''
         self.course_list = []
         self.enrolled = []
+        self.dept = dept
 
     def get_search_results(self) -> BeautifulSoup:
         ''' Sends POST request to URL and returns retrived content in parsed form '''
@@ -120,6 +121,13 @@ class WebSoc:
         # Print statement for debuggin purposes
         print("enrolling in " + str(enroll_list))
         return webreg.enroll(webreg_browser, enroll_list)
+
+    def main_routine(self):
+        soup = self.get_search_results()
+        if soup.find_all('li')[0].text == "Department: " + self.dept: #Checks if the post request retrieved the right data
+            self.check_courses(soup)
+            time.sleep(10)
+            print('rechecking')
 
     def check_enrolled(self) -> bool:
         ''' Removes enrolled course from the object's course list.
