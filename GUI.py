@@ -268,6 +268,7 @@ class Main(QWidget):
                print(e)
 
      def time_layout_handler(self):
+          ''' Hides or shows TimEdit field for enrollment time setting according to checkbox status'''
           if self.sender().isChecked():
                self.enroll_time.show()
           else:
