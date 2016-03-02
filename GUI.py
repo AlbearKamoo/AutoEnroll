@@ -298,8 +298,8 @@ class Main(QWidget):
           enroll_datetime = QTime_to_datetime(self.enroll_time)
           
           # Print statements for debugging purposes
-          print(dept)
-          print(course_nested)
+          print("Department :"+dept)
+          print("Courses specified by user: " +str(course_nested))
 
           try:
                # Initiates WebSoc handler object with enrollment list and user data
@@ -310,9 +310,12 @@ class Main(QWidget):
                while enroll_bot.check_enrolled() == False:
                     if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
                          enroll_bot.main_routine()
+                         time.sleep(10)
+                         print('Rechecking')
                     else:
                          print("Enrollment is set to begin at "+self.enroll_time.text())
                          sleep(60)
+                    
           except Exception as e:
               print(e)
               self.close()
@@ -388,10 +391,10 @@ def QTime_to_datetime(qtime) -> datetime:
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     #login_window = LoginWindow()
-     #login_window.show()
-     main_window = Main('john', 'abba')
-     main_window.show()
+     login_window = LoginWindow()
+     login_window.show()
+     #main_window = Main('john', 'abba')
+     #main_window.show()
      
 
      sys.exit(app.exec_())
