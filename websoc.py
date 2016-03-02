@@ -51,15 +51,15 @@ class WebSoc:
               
         
     def check_courses(self, soup: BeautifulSoup) -> defaultdict(str):
-        ''' Iterates through a course list to find courses codes specified by the user, 
-        building a dictionary with the course codes as keys, and their enrollment satus
-        as values. Returns this dictionary.
+        ''' Iterates through a scraped course list to find courses codes specified in the
+        object, building a dictionary with the course codes as keys, and their enrollment
+        status as values. Returns this dictionary.
 
         keyword arguments:
         soup -- parsed result from POST request
         '''
 
-        # Builds the available course list using HTML scraping on the soup object
+        # Builds available course list using HTML scraping on the soup object
         course_list = []
         data = soup.select('tr[valign="top"]')
         for i in data:
@@ -79,8 +79,8 @@ class WebSoc:
         return course_status
                 
     def get_enroll_list(self, course_status: dict):
-        ''' Builds a list of enrollable (OPEN) courses, later calling the enroll method on
-        those courses. Stores a list of succesfully enrolled courses as an object attribute.
+        ''' Builds a list of enrollable (OPEN) courses, mainting course/discussion
+        relationships through sublists, and returns it.
 
         keyword arguments:
         class_status -- a dictionary with course codes as keys and their enrollment status as values

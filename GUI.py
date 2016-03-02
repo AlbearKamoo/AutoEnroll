@@ -194,7 +194,7 @@ class Main(QWidget):
           # Events and signals
           self.enroll_button.clicked.connect(self.enroll)
           self.add_class_button.clicked.connect(self.add_course)
-          self.time_check.stateChanged.connect(self.add_time)
+          self.time_check.stateChanged.connect(self.time_layout_handler)
 
           # Adds Widgets to Grid
           self.grid.addWidget(self.dept_label, 0, 0)
@@ -224,7 +224,7 @@ class Main(QWidget):
           self.course_input = QLineEdit()
           self.course_input.setMaxLength(5)
           self.discussion_check = QCheckBox("Discussions?")
-          self.discussion_check.stateChanged.connect(self.add_discussion) 
+          self.discussion_check.stateChanged.connect(self.discussion_layout_handler) 
           
           # Adding widgets to layout
           self.grid.addWidget(self.course_label, self.course_count, 0)
@@ -246,7 +246,7 @@ class Main(QWidget):
           self.input_list.append(self.course_input)
           self.checkbox_list.append(self.discussion_check)
 
-     def add_discussion(self):
+     def discussion_layout_handler(self):
           ''' Hides or shows text field for discussion course codes according to checkbox status'''
           
           try:
@@ -267,7 +267,7 @@ class Main(QWidget):
           except Exception as e:
                print(e)
 
-     def add_time(self):
+     def time_layout_handler(self):
           if self.sender().isChecked():
                self.enroll_time.show()
           else:
@@ -275,23 +275,16 @@ class Main(QWidget):
                
 
      def enroll(self):
-          ''' Condenses user's course input into a nested list of strings. This list represents
-          course codes and lecture/discussion dependencies. Later sends this list to a WebSoc handler
-          object, and calls the object's main course checking routine. This routine executes until all
-          courses are successfully enrolled in, or until the user terminates the app.
+          ''' Retrieves a list that represents course codes and lecture/discussion dependencies.
+          Later sends this list to a WebSoc handler object, and calls the object's main course
+          checking routine. This routine executes until all courses are successfully enrolled
+          in, or until the user terminates the app.
           '''
           
-          # Builds a list of lists of strings from the user input
-          course_nested = []
-          for i in range(len(self.input_list)):
-               course_nested.append([self.input_list[i].text().strip()])
-               index = self.grid.indexOf(self.input_list[i])
-               position = self.grid.getItemPosition(index)
-               if position[0] in self.discussions.keys() and self.checkbox_list[i].isChecked():
-                    discussion_input = self.discussions[position[0]].text().split(',')
-                    course_nested[i].extend([x.strip() for x in discussion_input])
+          # Gets a list of lists of course codes from a private helper method
+          course_nested = self._build_course_list()
 
-          # gets the department form value using the user's selected department as the key for the department dictionary
+          # Gets the department form value using the user's selected department as the key for the global department dictionary
           dept = dept_dict[str(self.dept_combo.currentText())]
 
           # gets the enrollment time from the QTimeEdit field as a datetime object
@@ -320,8 +313,24 @@ class Main(QWidget):
               print(e)
               self.close()
 
+     def _build_course_list(self):
+          ''' Condenses all the user inputs into a list of lists of string and returns it. '''
+          course_nested = []
+          for i in range(len(self.input_list)):
+               course_nested.append([self.input_list[i].text().strip()])
+               index = self.grid.indexOf(self.input_list[i])
+               position = self.grid.getItemPosition(index)
+               if position[0] in self.discussions.keys() and self.checkbox_list[i].isChecked():
+                    discussion_input = self.discussions[position[0]].text().split(',')
+                    course_nested[i].extend([x.strip() for x in discussion_input])
+          return course_nested
+
 class LoginWindow(QWidget):
+     ''' Initial GUI app window for handling user login input and authentication. '''
+     
      def __init__(self):
+          ''' Initiates the Login window and builds its layout. '''
+          
           super().__init__()
 
           # Grid layout setup
@@ -356,12 +365,16 @@ class LoginWindow(QWidget):
           grid.addWidget(self.warning_label, 4, 0, 2, 3)
 
      def submit(self):
+          ''' Submits user input to a login check. If check passes, the Main window is
+          intiated and the Login window is closed. Alerts the user if the check failed. '''
+          
           # Try/except block for debugging purposes, may remove later
           username = str(self.username_input.text())
           password = str(self.password_input.text())
           try:
                browser = webreg.login(username, password)
                if webreg.login_check(browser):
+                    # Starts main window and brings it to the front. Closes login window
                     self.main_window = Main(username, password)
                     self.main_window.show()
                     self.main_window.activateWindow()
@@ -372,6 +385,7 @@ class LoginWindow(QWidget):
                print(e)
 
 def QTime_to_datetime(qtime) -> datetime:
+     ''' Helper funcion that converts a Qt.QTime object into a Python datetime object. '''
      time_string = qtime.text()
      hour_minute = time_string[:5].split(':')
      hours = int(hour_minute[0])
