@@ -5,7 +5,12 @@ from requests.auth import HTTPBasicAuth
 #have to do this to handle HTTPS correctly
 urllib3.contrib.pyopenssl.inject_into_urllib3()
 
-def login(username,password,courses):
+class Legacy:
+
+    def __init__(self) -> None:
+
+
+def login(username,password):
 
     login_info = {'ucinetid' : username,
                   'password' : password,
@@ -26,12 +31,11 @@ def login(username,password,courses):
 
     #Use this to help use locate the 4 digits ex: 0012
     that_young_login = re.search(r"/wramia(.*?)&",url)
-    isolate_digits = 'http://webreg1.reg.uci.edu:8889/cgi-bin' + that_young_login.group(0)[-5:-1]
+    session_id = 'http://webreg1.reg.uci.edu:8889/cgi-bin' + that_young_login.group(0)[-5:-1]
 
     #This is part of the form we submit to login
-    login_info['return_url'] = 'http%253A%252F%252Fwebreg1.reg.uci.edu%253A8889%252Fcgi-bin%252Fwramia%253Fpage%253Dlogin%253Fcall%253D' + isolate_digits
+    login_info['return_url'] = 'http%253A%252F%252Fwebreg1.reg.uci.edu%253A8889%252Fcgi-bin%252Fwramia%253Fpage%253Dlogin%253Fcall%253D' + session_id
 
-    print(url)
     #logs me in bruh
     get_auth_link = session.post(url, data=login_info, allow_redirects=False)
     regex_link = re.search(r"\"0;url=(.*?)\"", get_auth_link.content)
@@ -39,6 +43,12 @@ def login(username,password,courses):
 
     #let's <>ing go into the log in page
     session.get(login_confirmation_redirect)
+
+    #To remove the '&'
+    session_link = re.search(r"http(.*?)&", login_confirmation_redirect)[-1]
+
+    #digits are gonna be important if we want to access menus
+    return session, session_id, session_link
 """
     for c in courses:
         enrollment_info = {'value' : 'add',
@@ -53,4 +63,30 @@ def login(username,password,courses):
     print(logout.url)
 """
 
-login('##############','############',['36420', '36424'])
+def enrollment(courselist, session, session_id, session_link):
+     #click Enrollment Button
+     enroll_button = {'page' : 'enrollQtrMenu',
+                      'mode' : 'enrollmentMenu',
+                      'call' : session_id,
+                      'submit' : 'Enrollment Menu'}
+
+     session.post(session_link, data=enroll_button)
+
+     for class_id in courselist:
+        join_class = {'page' : 'enrollmentMenu',
+                      'call' : session_id,
+                      'mode' : 'add',
+                      'button' : 'Send Request',
+                      'courseCode' : class_id,
+                      'gradeOption' : '',
+                      'varUnits' : '',
+                      'authCode' : '',
+                      'courseCode' : ''}
+        session.post('zzz')
+
+
+
+
+session, session_id, session_link = login('##############','####################')
+
+enrollment([],session, session_id,session_link)
