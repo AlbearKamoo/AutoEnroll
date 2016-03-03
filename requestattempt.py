@@ -4,8 +4,8 @@ import requests
 def generate_info(website, requirements):
     #website = string of webpage
     #requirements = dictionary of the form
-    requirements = requirements
     request = requests.post(website,requirements)
+    print(request.url)
     with open('download_stuff2.html', 'w') as d:
         d.write(request.content)
 
