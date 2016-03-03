@@ -15,18 +15,29 @@ def login_check(browser):
         browser.quit()
         return False
     else:
+        if browser.find_by_value("Logout"):
+            browser.find_by_value("Logout").first.click()
+        browser.quit()
         print("Success")
         return True
 
 def enroll(browser, courselist):
-    if login_check(browser):
-        browser.find_by_css('input[value = "Enrollment Menu"]').first.click()
-        for courseId in courselist:
+    print(courselist)
+    enroll_list = []
+    browser.find_by_css('input[value = "Enrollment Menu"]').first.click()
+    for i in range(len(courselist)):
+        enroll_list.append([])
+        for courseId in courselist[i]:
             browser.choose('mode', 'add')
             browser.fill("courseCode", courseId)
             browser.find_by_css('input[value = "Send Request"]').first.click()
-        browser.find_by_value("Logout").first.click()
-        browser.quit()
+            if browser.find_by_css('table[class="studyList"]'):
+                enroll_list[i].append(courseId)
+                
+    browser.find_by_value("Logout").first.click()
+    browser.quit()
+    print("enrolled in: " +str(enroll_list))
+    return enroll_list
 
 
 if __name__ == '__main__':
