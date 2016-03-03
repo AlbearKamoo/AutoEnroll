@@ -112,7 +112,7 @@ class WebSoc:
             self.enrolled = webreg.enroll(webreg_browser, enroll_list)
 
     def main_routine(self):
-        soup = self.get_POST_results(self.URL, self.form_data)
+        soup = get_POST_results(self.URL, self.form_data)
         if soup.find_all('li')[0].text == "Department: " + self.dept: #Checks if the post request retrieved the right data
             course_status = self.check_courses(soup)
             enroll_list = self.get_enroll_list(course_status)
