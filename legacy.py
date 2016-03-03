@@ -17,7 +17,11 @@ class Legacy:
         self.session_link = ''
         self.session = requests.Session()
 
+        #tells us which menu we're in so we can log out properly
+        self.which_menu = ''
+
     def login(self) -> None:
+        print('start login')
         '''
             This method will be used to log the user into webreg and obtain a session object
             that will be used to navigate through WebReg
@@ -58,6 +62,9 @@ class Legacy:
         #something like: http://webreg4.reg.uci.edu:8889/cgi-bin/wramia?page=login?call=####
         self.session_link = re.match(r"http(.*?)&", login_confirmation_redirect).group(0)[:-1]
         print(self.session_link)
+        print('Done')
+        #tells us which menu we're in so we can log out properly
+        self.which_menu = 'enrollQrtMenu'
 
 
     def enroll(self) -> None:
@@ -66,23 +73,50 @@ class Legacy:
             User will be entering Enrollment Menu and this will register for user's specified classes
         :return: Nothing
         '''
+        #tells us which menu we're in so we can log out properly
+        self.which_menu = 'enrollmentMenu'
+
         #click Enrollment Button
-        print(self.session_id)
-        print(self.session.cookies)
         enroll_button = {'page' : 'enrollQtrMenu',
                          'mode' : 'enrollmentMenu',
                          'call' : self.session_id}
 
+        print('enrolling')
         x = self.session.post(self.session_link, data=enroll_button)
         for class_id in self.courselist:
             join_class = {'page' : 'enrollmentMenu',
                           'call' : self.session_id,
                           'mode' : 'add',
+                          'button' : 'Send Request',
                           'courseCode' : class_id,
                           'gradeOption' : '',
                           'varUnits' : '',
                           'authCode' : ''}
             x = self.session.post(self.session_link, join_class)
+        print('done')
+
+    def logout(self) -> None:
+        '''
+        Logs the user out. YOU MUST CALL THIS METHOD EVERYTIME
+        enrollmentMenu
+        enrollQrtMenu
+        waitlistMenu
+        :return: Nothing
+        '''
+
+        logout_form = {'page' : self.which_menu,
+                       'mode' : 'exit',
+                       'call' : self.session_id,
+                       'submit' : 'Logout'}
+
+        self.session.post(self.session_link, logout_form)
 
 
+    def waitlist(self) -> None:
+        '''
+        Probably never gonna do this
+        :return:
+        '''
 
+        #tells us which menu we're in so we can log out properly
+        self.which_menu = 'waitlistMenu'
