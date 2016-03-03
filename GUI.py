@@ -212,7 +212,7 @@ class Main(QWidget):
           self.grid.setColumnMinimumWidth(4, 120)
           
 
-     def add_course(self):
+     def add_course(self) -> None:
           ''' Adds a text field for course code and a discussion checkbox as a row in the layout '''
 
           # Attribute for tracking row number (number of class fields added)
@@ -223,7 +223,7 @@ class Main(QWidget):
           self.course_label.setAlignment(Qt.AlignRight)
           self.course_input = QLineEdit()
           self.course_input.setMaxLength(5)
-          self.discussion_check = QCheckBox("Discussions?")
+          self.discussion_check = QCheckBox("Discussions/Labs?")
           self.discussion_check.stateChanged.connect(self.discussion_layout_handler) 
           
           # Adding widgets to layout
@@ -246,7 +246,7 @@ class Main(QWidget):
           self.input_list.append(self.course_input)
           self.checkbox_list.append(self.discussion_check)
 
-     def discussion_layout_handler(self):
+     def discussion_layout_handler(self) -> None:
           ''' Hides or shows text field for discussion course codes according to checkbox status'''
           
           try:
@@ -267,7 +267,7 @@ class Main(QWidget):
           except Exception as e:
                print(e)
 
-     def time_layout_handler(self):
+     def time_layout_handler(self) -> None:
           ''' Hides or shows TimEdit field for enrollment time setting according to checkbox status'''
           if self.sender().isChecked():
                self.enroll_time.show()
@@ -275,7 +275,7 @@ class Main(QWidget):
                self.enroll_time.hide()
                
 
-     def enroll(self):
+     def enroll(self) -> None:
           ''' Retrieves a list that represents course codes and lecture/discussion dependencies.
           Later sends this list to a WebSoc handler object, and calls the object's main course
           checking routine. This routine executes until all courses are successfully enrolled
@@ -290,31 +290,31 @@ class Main(QWidget):
 
           # gets the enrollment time from the QTimeEdit field as a datetime object
           enroll_datetime = QTime_to_datetime(self.enroll_time)
+
+          if _check_input(course_nested):
+               print("Department selected: "+dept)
+               print("Courses specified by user: " +str(course_nested))
           
-          # Print statements for debugging purposes
-          print("Department selected: "+dept)
-          print("Courses specified by user: " +str(course_nested))
+               try:
+                    # Initiates WebSoc handler object with enrollment list and user data
+                    enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
+                    self.close() # Closes Main window and leaves bot running in background
 
-          try:
-               # Initiates WebSoc handler object with enrollment list and user data
-               enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
-               self.close() # Closes Main window and leaves bot running in background
+                    # MAIN ROUTINE: continously checks course status until course list is empty
+                    while enroll_bot.check_enrolled() == False:
+                         if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
+                              enroll_bot.main_routine()
+                              sleep(10)
+                              print('Rechecking')
+                         else:
+                              print("Enrollment is set to begin at "+self.enroll_time.text())
+                              sleep(60)
+                         
+               except Exception as e:
+                   print(e)
+                   self.close()
 
-               # MAIN ROUTINE: continously checks course status until course list is empty
-               while enroll_bot.check_enrolled() == False:
-                    if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
-                         enroll_bot.main_routine()
-                         sleep(10)
-                         print('Rechecking')
-                    else:
-                         print("Enrollment is set to begin at "+self.enroll_time.text())
-                         sleep(60)
-                    
-          except Exception as e:
-              print(e)
-              self.close()
-
-     def _build_course_list(self):
+     def _build_course_list(self) -> [[str]]:
           ''' Condenses all the user inputs into a list of lists of string and returns it. '''
           course_nested = []
           for i in range(len(self.input_list)):
@@ -325,6 +325,21 @@ class Main(QWidget):
                     discussion_input = self.discussions[position[0]].text().split(',')
                     course_nested[i].extend([x.strip() for x in discussion_input])
           return course_nested
+
+def _check_input(course_nested: [[str]]) -> bool:
+     ''' Checks course codes to see if they are strings representing five digit numbers.
+     Returns True if all the codes in the list pass the check, False otherwise. '''
+     
+     try:
+          for l in course_nested:
+               for c in l:
+                    int(c)
+                    assert len(c) == 5, "Course code "+c+" is of the wrong length."
+          return True
+     except Exception as e:
+         print("Invalid course input. All course codes must be five digit numbers.")
+         print(e)
+         return False
 
 class LoginWindow(QWidget):
      ''' Initial GUI app window for handling user login input and authentication. '''
@@ -365,7 +380,7 @@ class LoginWindow(QWidget):
           grid.addWidget(self.OK_button, 3, 2)
           grid.addWidget(self.warning_label, 4, 0, 2, 3)
 
-     def submit(self):
+     def submit(self) -> None:
           ''' Submits user input to a login check. If check passes, the Main window is
           intiated and the Login window is closed. Alerts the user if the check failed. '''
           
@@ -385,7 +400,7 @@ class LoginWindow(QWidget):
           except Exception as e:
                print(e)
 
-def QTime_to_datetime(qtime) -> datetime:
+def QTime_to_datetime(qtime: QTimeEdit) -> datetime:
      ''' Helper funcion that converts a Qt.QTime object into a Python datetime object. '''
      time_string = qtime.text()
      hour_minute = time_string[:5].split(':')
