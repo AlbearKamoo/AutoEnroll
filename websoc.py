@@ -105,7 +105,8 @@ class WebSoc:
     
         webreg_browser = webreg.login(self.userdata[0], self.userdata[1])
         if webreg_browser.find_by_css('div[class="DivLogoutMsg"]'):
-            print("Currently unable to access Webreg. Your account may be in use, or the system may not have updated yet.")
+            print("Currently unable to access Webreg.")
+            print("Error Message: " +webreg_browser.find_by_css('div[class="DivLogouMsg"]').text)
             webreg_browser.quit()
         else:
             print("enrolling in " + str(enroll_list))
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     dept = "PHILOS"
     test = WebSoc(dept, [['30500', '30503'], ['30640']], "#####", "#####")
     try:
-        soup = test.get_search_results()
+        soup = get_POST_results()
         if soup.find_all('li')[0].text == "Department: " + dept:
             for i in range(40):
                 test.check_courses(soup)

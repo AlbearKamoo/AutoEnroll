@@ -400,8 +400,6 @@ def QTime_to_datetime(qtime) -> datetime:
 
      return datetime.combine(d, t)
      
-     
-          
 
 if __name__ == '__main__':
      app = QApplication(sys.argv)
