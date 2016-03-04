@@ -20,13 +20,18 @@ class Legacy:
         #tells us which menu we're in so we can log out properly
         self.which_menu = ''
 
+        #define base link
+        self.logout_link = ''
+
     def login(self) -> None:
-        print('start login')
         '''
             This method will be used to log the user into webreg and obtain a session object
             that will be used to navigate through WebReg
         :return: Nothing
         '''
+
+        print('Start Login')
+
         login_info = {'ucinetid' : self.username,
                     'password' : self.password,
                     'submit_type' : '',
@@ -62,10 +67,13 @@ class Legacy:
         #something like: http://webreg4.reg.uci.edu:8889/cgi-bin/wramia?page=login?call=####
         self.session_link = re.match(r"http(.*?)&", login_confirmation_redirect).group(0)[:-1]
         print(self.session_link)
-        print('Done')
+
+        self.logout_link = re.match(r"(.*?)wramia", self.session_link).group(0)
+
         #tells us which menu we're in so we can log out properly
         self.which_menu = 'enrollQrtMenu'
 
+        print('Finished Login')
 
     def enroll(self) -> None:
         '''
@@ -74,6 +82,7 @@ class Legacy:
         :return: Nothing
         '''
         #tells us which menu we're in so we can log out properly
+        print('Start Enrollment')
         self.which_menu = 'enrollmentMenu'
 
         #click Enrollment Button
@@ -93,7 +102,8 @@ class Legacy:
                           'varUnits' : '',
                           'authCode' : ''}
             x = self.session.post(self.session_link, join_class)
-        print('done')
+            print('Successfully Enrolled In' + class_id)
+        print('Enrollment Complete')
 
     def logout(self) -> None:
         '''
@@ -103,13 +113,12 @@ class Legacy:
         waitlistMenu
         :return: Nothing
         '''
-
-        logout_form = {'page' : self.which_menu,
-                       'mode' : 'exit',
-                       'call' : self.session_id,
-                       'submit' : 'Logout'}
-
-        self.session.post(self.session_link, logout_form)
+        print('Logging Out....')
+        #use this to help post the log out
+        #Tried using a dictionary, but it didn't work
+        logout_hyperlink = self.logout_link + "?page="+ self.which_menu + "&mode=exit&call=" + self.session_id + "&submit=Logout"
+        self.session.post(logout_hyperlink)
+        print('Successfully Logged Out')
 
 
     def waitlist(self) -> None:
@@ -120,3 +129,6 @@ class Legacy:
 
         #tells us which menu we're in so we can log out properly
         self.which_menu = 'waitlistMenu'
+
+
+
