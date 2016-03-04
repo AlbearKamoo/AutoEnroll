@@ -66,7 +66,7 @@ class Legacy:
         #To remove the '&'
         #something like: http://webreg4.reg.uci.edu:8889/cgi-bin/wramia?page=login?call=####
         self.session_link = re.match(r"http(.*?)&", login_confirmation_redirect).group(0)[:-1]
-        print(self.session_link)
+        print("Use this link if program failed to logout: " + self.session_link)
 
         self.logout_link = re.match(r"(.*?)wramia", self.session_link).group(0)
 
