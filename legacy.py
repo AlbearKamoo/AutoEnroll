@@ -123,7 +123,7 @@ class Legacy:
 
     def waitlist(self) -> None:
         '''
-        Probably never gonna do this
+        Probably never gonna do this.
         :return:
         '''
 
