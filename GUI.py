@@ -5,6 +5,7 @@ from collections import defaultdict
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from course import Course
 import sender
 import websoc
 import webreg
@@ -289,8 +290,8 @@ class Main(QWidget):
           in, or until the user terminates the app.
           '''
           
-          # Gets a list of lists of course codes from a private helper method
-          course_nested = self._build_course_list()
+          # Gets a list of lists of course codes from a helper method
+          course_list = self.build_course_list()
 
           # Gets the department form value using the user's selected department as the key for the global department dictionary
           dept = dept_dict[str(self.dept_combo.currentText())]
@@ -298,57 +299,65 @@ class Main(QWidget):
           # gets the enrollment time from the QTimeEdit field as a datetime object
           enroll_datetime = QTime_to_datetime(self.enroll_time)
 
-          if _check_input(course_nested):
-               print("Department selected: "+dept)
-               print("Courses specified by user: " +str(course_nested))
+          print("Department selected: "+dept)
+          print("Courses specified by user: ")
+          for c in course_list:
+               print(c)
           
-               try:
-                    # Initiates WebSoc handler object with enrollment list and user data
-                    enroll_bot = websoc.WebSoc(dept, course_nested, self.username, self.password)
-                    self.close() # Closes Main window and leaves bot running in background
+          try:
+               # Initiates WebSoc handler object with enrollment list and user data
+               websoc_bot = websoc.WebSoc(dept)
+               webreg_bot = legacy.Legacy(self.username, self.password)
+               self.close() # Closes Main window and leaves bot running in background
 
-                    # MAIN ROUTINE: continously checks course status until course list is empty
-                    while enroll_bot.check_enrolled() == False:
-                         if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
-                              enroll_bot.main_routine()
-                              sleep(10)
-                              print('Rechecking')
-                              if self.email.isChecked() and enroll_bot.enrolled:
-                                   message = ''
-                                   for ld in enroll_bot.enrolled:
-                                        for c in ld:
-                                             message += "Successfully enrolled in " + c + "\n"
-                                   mailbot = sender.default_sender()
-                                   mailbot.send_email(message, self.username +"@uci.edu", 'AutoEnroll Notification')
-                         else:
-                              print("Enrollment is set to begin at "+self.enroll_time.text())
-                              sleep(60)
-                         
-               except Exception as e:
-                   print(e)
-                   self.close()
+               # MAIN ROUTINE: continously checks course status until course list is empty
+               while enroll_bot.check_enrolled() == False:
+                    if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
+                         enroll_bot.main_routine()
+                         sleep(10)
+                         print('Rechecking')
+                         if self.email.isChecked() and enroll_bot.enrolled:
+                              message = ''
+                              for ld in enroll_bot.enrolled:
+                                   for c in ld:
+                                        message += "Successfully enrolled in " + c + "\n"
+                              mailbot = sender.default_sender()
+                              mailbot.send_email(message, self.username +"@uci.edu", 'AutoEnroll Notification')
+                    else:
+                         print("Enrollment is set to begin at "+self.enroll_time.text())
+                         sleep(60)
+                    
+          except Exception as e:
+              print(e)
+              self.close()
 
-     def _build_course_list(self) -> [[str]]:
-          ''' Condenses all the user inputs into a list of lists of string and returns it. '''
-          course_nested = []
+     def build_course_list(self) -> [Course]:
+          ''' Condenses all the user inputs into a list of Course objects and returns it. '''
+          course_list = []
           for i in range(len(self.input_list)):
-               course_nested.append([self.input_list[i].text().strip()])
+               lecture = self.input_list[i].text().strip()
+               
+               course_codes = []
+               course_codes.append(lecture)
+
                index = self.grid.indexOf(self.input_list[i])
                position = self.grid.getItemPosition(index)
                if position[0] in self.discussions.keys() and self.checkbox_list[i].isChecked():
                     discussion_input = self.discussions[position[0]].text().split(',')
-                    course_nested[i].extend([x.strip() for x in discussion_input])
-          return course_nested
+                    course_codes.extend([x.strip() for x in discussion_input])
 
-def _check_input(course_nested: [[str]]) -> bool:
+               if _check_input(course_codes):
+                    course_list.append(Course(course_codes))
+          return course_list
+
+def _check_input(courses: [str]) -> bool:
      ''' Checks course codes to see if they are strings representing five digit numbers.
      Returns True if all the codes in the list pass the check, False otherwise. '''
      
      try:
-          for l in course_nested:
-               for c in l:
-                    int(c)
-                    assert len(c) == 5, "Course code "+c+" is of the wrong length."
+          for c in courses:
+               int(c)
+               assert len(c) == 5, "Course code "+c+" is of the wrong length."
           return True
      except Exception as e:
          print("Invalid course input. All course codes must be five digit numbers.")
