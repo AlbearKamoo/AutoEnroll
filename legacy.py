@@ -23,6 +23,8 @@ class Legacy:
         #define base link
         self.logout_link = ''
 
+        self.enrolled_classes = []
+
     def login(self) -> bool:
         '''
             This method will be used to log the user into webreg and obtain a session object
@@ -114,18 +116,46 @@ class Legacy:
 
         print('enrolling')
         x = self.session.post(self.session_link, data=enroll_button)
-        for classes in self.courselist:
-            for class_id in classes:
+        for course in self.courselist:
+
+            #Use this variable to check if we wanna add the course to the "enrolled class list"
+            is_enrolled = False
+
+            join_class = {'page' : 'enrollmentMenu',
+                          'call' : self.session_id,
+                          'mode' : 'add',
+                          'button' : 'Send Request',
+                          'courseCode' : course.lecture_code,
+                          'gradeOption' : '',
+                          'varUnits' : '',
+                          'authCode' : ''}
+            enrollment_response = self.session.post(self.session_link, join_class)
+
+            #checks if we successfully enrolled in the lecture
+            if('studyList' in str(enrollment_response.content)):
+                print('Successfully Enrolled In Lecture : ' + course.lecture_code)
+            else:
+                continue
+            for discussion_id in course.auxiliary_codes:
                 join_class = {'page' : 'enrollmentMenu',
                               'call' : self.session_id,
                               'mode' : 'add',
                               'button' : 'Send Request',
-                              'courseCode' : class_id,
+                              'courseCode' : course.lecture_code,
                               'gradeOption' : '',
                               'varUnits' : '',
                               'authCode' : ''}
-                x = self.session.post(self.session_link, join_class)
-                print('Successfully Enrolled In' + class_id
+                enrollment_response = self.session.post(self.session_link, join_class)
+
+                #checks if we successfully enrolled in the discussion
+                if('studyList' in str(enrollment_response.content)):
+                    is_enrolled = True
+                    print('Successfully Enrolled In Discussion : ' + course.lecture_code)
+                    break
+
+            if(is_enrolled):
+                self.enrolled_classes.append(course)
+
 
         print('Enrollment Complete')
 
