@@ -134,8 +134,7 @@ class Legacy:
             #checks if we successfully enrolled in the lecture
             if('studyList' in str(enrollment_response.content)):
                 print('Successfully Enrolled In Lecture : ' + course.lecture_code)
-            else:
-                continue
+
             for discussion_id in course.auxiliary_codes:
                 join_class = {'page' : 'enrollmentMenu',
                               'call' : self.session_id,
@@ -188,6 +187,14 @@ class Legacy:
 
         #tells us which menu we're in so we can log out properly
         self.which_menu = 'waitlistMenu'
+
+
+    #Have to be Courses Class
+    def remove_enrolled_courses(self, courses: []) -> []:
+        for classes in self.enrolled_classes:
+            if classes in courses:
+                courses.remove(classes)
+        return courses
 
 if __name__ == '__main__':
     legacy = Legacy('#####', '#####')
