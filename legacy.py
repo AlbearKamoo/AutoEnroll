@@ -3,7 +3,7 @@ from requests.auth import HTTPBasicAuth
 
 
 class Legacy:
-    def __init__(self, username: str, password: str, courselist: []) -> None:
+    def __init__(self, username: str, password: str) -> None:
         '''
         :param username: str that is a user's ID
         :param password: str that is user's password
@@ -12,10 +12,10 @@ class Legacy:
         '''
         self.username = username
         self.password = password
-        self.courselist = courselist
         self.session_id = ''
         self.session_link = ''
         self.session = requests.Session()
+        self.session_token = ''
 
         #tells us which menu we're in so we can log out properly
         self.which_menu = ''
@@ -23,7 +23,7 @@ class Legacy:
         #define base link
         self.logout_link = ''
 
-    def login(self) -> None:
+    def login(self) -> bool:
         '''
             This method will be used to log the user into webreg and obtain a session object
             that will be used to navigate through WebReg
@@ -57,11 +57,14 @@ class Legacy:
 
         #logs me in bruh
         get_auth_link = self.session.post(url, data=login_info, allow_redirects=False)
-        regex_link = re.search(r"\"0;url=(.*?)\"", str(get_auth_link.content))
-        login_confirmation_redirect = regex_link.group(0)[7:-1]
 
-        #let's <>ing go into the log in page
-        self.session.get(login_confirmation_redirect)
+        regex_link = re.search(r"\"0;url=(.*?)\"", str(get_auth_link.content))
+
+        #First check.
+        if(regex_link is None):
+            print('Login failed: You need to incorrect login information')
+            return False
+        login_confirmation_redirect = regex_link.group(0)[7:-1]
 
         #To remove the '&'
         #something like: http://webreg4.reg.uci.edu:8889/cgi-bin/wramia?page=login?call=####
@@ -70,19 +73,40 @@ class Legacy:
 
         self.logout_link = re.match(r"(.*?)wramia", self.session_link).group(0)
 
-        #tells us which menu we're in so we can log out properly
-        self.which_menu = 'enrollQrtMenu'
+        #let's <>ing go into the log in page
+        self.session.get(login_confirmation_redirect)
+        self.session_token = self.session.cookies['ucinetid_auth']
 
-        print('Finished Login')
+        #Checks if user is logged in
+        #IF ucinetid_auth cookie is given to us
+        if(self.session.cookies.__contains__('ucinetid_auth')):
 
-    def enroll(self) -> None:
+            #Now check if ucinetid_auth that is given to us isn't a "no_key" value
+            #or if the ucinetid_auth is not equal to the current session_token (that would mean we didn't finish a log in)
+            if(self.session.cookies['ucinetid_auth'] != 'no_key' and self.session.cookies['ucinetid_auth'] != self.session_token):
+                print('Finished Login')
+                return True
+
+        print('Login Failed')
+        self.session_link = ''
+        return False
+
+
+
+    def enroll(self, courselist: [[str]]) -> None:
         '''
         Starting from the WebReg Main Menu:
             User will be entering Enrollment Menu and this will register for user's specified classes
         :return: Nothing
         '''
         #tells us which menu we're in so we can log out properly
-        print('Start Enrollment')
+        print('Start Enrollment...')
+
+        #This self variables are given in the login() method. If it is empty that means user hasn't logged in
+        if(self.session_link == ''):
+            print('You never logged on.')
+            return
+
         self.which_menu = 'enrollmentMenu'
 
         #click Enrollment Button
@@ -92,17 +116,18 @@ class Legacy:
 
         print('enrolling')
         x = self.session.post(self.session_link, data=enroll_button)
-        for class_id in self.courselist:
-            join_class = {'page' : 'enrollmentMenu',
-                          'call' : self.session_id,
-                          'mode' : 'add',
-                          'button' : 'Send Request',
-                          'courseCode' : class_id,
-                          'gradeOption' : '',
-                          'varUnits' : '',
-                          'authCode' : ''}
-            x = self.session.post(self.session_link, join_class)
-            print('Successfully Enrolled In' + class_id)
+        for classes in self.courselist:
+            for class_id in classes:
+                join_class = {'page' : 'enrollmentMenu',
+                              'call' : self.session_id,
+                              'mode' : 'add',
+                              'button' : 'Send Request',
+                              'courseCode' : class_id,
+                              'gradeOption' : '',
+                              'varUnits' : '',
+                              'authCode' : ''}
+                x = self.session.post(self.session_link, join_class)
+                print('Successfully Enrolled In' + class_id)
         print('Enrollment Complete')
 
     def logout(self) -> None:
@@ -114,6 +139,11 @@ class Legacy:
         :return: Nothing
         '''
         print('Logging Out....')
+        #This self variables are given in the login() method. If it is empty that means user hasn't logged in
+        if(self.session_link == ''):
+            print('You never logged on.')
+            return
+
         #use this to help post the log out
         #Tried using a dictionary, but it didn't work
         logout_hyperlink = self.logout_link + "?page="+ self.which_menu + "&mode=exit&call=" + self.session_id + "&submit=Logout"
@@ -129,6 +159,3 @@ class Legacy:
 
         #tells us which menu we're in so we can log out properly
         self.which_menu = 'waitlistMenu'
-
-
-
