@@ -75,7 +75,6 @@ class Legacy:
 
         #let's <>ing go into the log in page
         self.session.get(login_confirmation_redirect)
-        self.session_token = self.session.cookies['ucinetid_auth']
 
         #Checks if user is logged in
         #IF ucinetid_auth cookie is given to us
@@ -84,6 +83,7 @@ class Legacy:
             #Now check if ucinetid_auth that is given to us isn't a "no_key" value
             #or if the ucinetid_auth is not equal to the current session_token (that would mean we didn't finish a log in)
             if(self.session.cookies['ucinetid_auth'] != 'no_key' and self.session.cookies['ucinetid_auth'] != self.session_token):
+                self.session_token = self.session.cookies['ucinetid_auth']
                 print('Finished Login')
                 return True
 
