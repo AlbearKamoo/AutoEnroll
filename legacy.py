@@ -93,7 +93,7 @@ class Legacy:
         self.session_link = ''
         return False
 
-    def enroll(self, courselist: [[str]]) -> None:
+    def enroll(self, courselist: [[str]]) -> []:
         '''
         Starting from the WebReg Main Menu:
             User will be entering Enrollment Menu and this will register for user's specified classes
@@ -101,6 +101,7 @@ class Legacy:
         '''
         #tells us which menu we're in so we can log out properly
         print('Start Enrollment...')
+        self.enrolled_classes = []
 
         #This self variables are given in the login() method. If it is empty that means user hasn't logged in
         if(self.session_link == ''):
@@ -156,6 +157,8 @@ class Legacy:
                 self.enrolled_classes.append(course)
 
 
+
+        return self.enrolled_classes
         print('Enrollment Complete')
 
     def logout(self) -> None:
