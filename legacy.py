@@ -62,7 +62,7 @@ class Legacy:
 
         #First check.
         if(regex_link is None):
-            print('Login failed: You need to incorrect login information')
+            print('Login failed: You need to correct login information')
             return False
         login_confirmation_redirect = regex_link.group(0)[7:-1]
 
@@ -74,8 +74,8 @@ class Legacy:
         self.logout_link = re.match(r"(.*?)wramia", self.session_link).group(0)
 
         #let's <>ing go into the log in page
-        self.session.get(login_confirmation_redirect)
-
+        self.landing_page = self.session.get(login_confirmation_redirect)
+    
         #Checks if user is logged in
         #IF ucinetid_auth cookie is given to us
         if(self.session.cookies.__contains__('ucinetid_auth')):
@@ -158,3 +158,8 @@ class Legacy:
 
         #tells us which menu we're in so we can log out properly
         self.which_menu = 'waitlistMenu'
+
+if __name__ == '__main__':
+    legacy = Legacy('#####', '#####')
+    legacy.login()
+    legacy.logout()
