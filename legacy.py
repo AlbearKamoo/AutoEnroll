@@ -125,7 +125,8 @@ class Legacy:
                               'varUnits' : '',
                               'authCode' : ''}
                 x = self.session.post(self.session_link, join_class)
-                print('Successfully Enrolled In' + class_id)
+                print('Successfully Enrolled In' + class_id
+
         print('Enrollment Complete')
 
     def logout(self) -> None:
