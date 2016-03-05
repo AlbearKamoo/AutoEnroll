@@ -3,7 +3,7 @@ from requests.auth import HTTPBasicAuth
 
 
 class Legacy:
-    def __init__(self, username: str, password: str, courselist: []) -> None:
+    def __init__(self, username: str, password: str) -> None:
         '''
         :param username: str that is a user's ID
         :param password: str that is user's password
@@ -12,7 +12,6 @@ class Legacy:
         '''
         self.username = username
         self.password = password
-        self.courselist = courselist
         self.session_id = ''
         self.session_link = ''
         self.session = requests.Session()
@@ -75,7 +74,7 @@ class Legacy:
 
         print('Finished Login')
 
-    def enroll(self) -> None:
+    def enroll(self, courselist: [[str]]) -> None:
         '''
         Starting from the WebReg Main Menu:
             User will be entering Enrollment Menu and this will register for user's specified classes
@@ -92,17 +91,18 @@ class Legacy:
 
         print('enrolling')
         x = self.session.post(self.session_link, data=enroll_button)
-        for class_id in self.courselist:
-            join_class = {'page' : 'enrollmentMenu',
-                          'call' : self.session_id,
-                          'mode' : 'add',
-                          'button' : 'Send Request',
-                          'courseCode' : class_id,
-                          'gradeOption' : '',
-                          'varUnits' : '',
-                          'authCode' : ''}
-            x = self.session.post(self.session_link, join_class)
-            print('Successfully Enrolled In' + class_id)
+        for classes in courselist:
+            for class_id in classes:
+                join_class = {'page' : 'enrollmentMenu',
+                              'call' : self.session_id,
+                              'mode' : 'add',
+                              'button' : 'Send Request',
+                              'courseCode' : class_id,
+                              'gradeOption' : '',
+                              'varUnits' : '',
+                              'authCode' : ''}
+                x = self.session.post(self.session_link, join_class)
+                print('Successfully Enrolled In' + class_id)
         print('Enrollment Complete')
 
     def logout(self) -> None:

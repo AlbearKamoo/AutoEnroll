@@ -5,8 +5,10 @@ from collections import defaultdict
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+import sender
 import websoc
 import webreg
+import legacy
 
 
 # Dictionary containing WebSoc string representations as keys, and the corresponding form data as values
@@ -187,6 +189,7 @@ class Main(QWidget):
           self.enroll_button.setFixedWidth(120)
 
           self.time_check = QCheckBox("Set enrollment time")
+          self.email_check = QCheckBox("Email me if enrollment is successful")
 
           self.enroll_time = QTimeEdit()
           self.enroll_time.hide()
@@ -200,6 +203,7 @@ class Main(QWidget):
           self.grid.addWidget(self.dept_label, 0, 0)
           self.grid.addWidget(self.dept_combo, 0, 1, 1, 4)
           self.grid.addWidget(self.add_class_button, 1, 2)
+          self.grid.addWidget(self.email_check, 1, 3, 1, 2)
           self.grid.addWidget(self.time_check, 2, 0)
           self.grid.addWidget(self.enroll_time, 2, 1)
           self.grid.addWidget(self.enroll_button, 2, 4)
@@ -210,6 +214,7 @@ class Main(QWidget):
           self.setGeometry(400, 400, 500, 200)
           self.grid.setColumnMinimumWidth(3, 120)
           self.grid.setColumnMinimumWidth(4, 120)
+          self.grid.setContentsMargins(20, 10, 10, 5)
           
 
      def add_course(self) -> None:
@@ -231,14 +236,16 @@ class Main(QWidget):
           self.grid.addWidget(self.course_input, self.course_count, 1, 1, 1)
           self.grid.addWidget(self.discussion_check, self.course_count, 2, 1, 1)
 
-          # Shifts time options, add class button, and start button down a row
+          # Shifts Widgets at the bottom two rows further down
           self.grid.removeWidget(self.time_check)
           self.grid.removeWidget(self.enroll_time)
           self.grid.removeWidget(self.add_class_button)
+          self.grid.removeWidget(self.email_check)
           self.grid.removeWidget(self.enroll_button)
           self.grid.addWidget(self.time_check, self.course_count + 2, 0)
           self.grid.addWidget(self.enroll_time, self.course_count +2, 1)
           self.grid.addWidget(self.add_class_button, self.course_count + 1, 2)
+          self.grid.addWidget(self.email_check, self.course_count + 1, 3, 1, 2)
           self.grid.addWidget(self.enroll_button, self.course_count + 2, 4)
           
 
@@ -306,6 +313,13 @@ class Main(QWidget):
                               enroll_bot.main_routine()
                               sleep(10)
                               print('Rechecking')
+                              if self.email.isChecked() and enroll_bot.enrolled:
+                                   message = ''
+                                   for ld in enroll_bot.enrolled:
+                                        for c in ld:
+                                             message += "Successfully enrolled in " + c + "\n"
+                                   mailbot = sender.default_sender()
+                                   mailbot.send_email(message, self.username +"@uci.edu", 'AutoEnroll Notification')
                          else:
                               print("Enrollment is set to begin at "+self.enroll_time.text())
                               sleep(60)
@@ -419,10 +433,10 @@ def QTime_to_datetime(qtime: QTimeEdit) -> datetime:
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     login_window = LoginWindow()
-     login_window.show()
-     #main_window = Main('john', 'abba')
-     #main_window.show()
+     #login_window = LoginWindow()
+     #login_window.show()
+     main_window = Main('john', 'abba')
+     main_window.show()
      
 
      sys.exit(app.exec_())
