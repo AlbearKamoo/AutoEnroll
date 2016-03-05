@@ -91,8 +91,6 @@ class Legacy:
         self.session_link = ''
         return False
 
-
-
     def enroll(self, courselist: [[str]]) -> None:
         '''
         Starting from the WebReg Main Menu:

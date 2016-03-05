@@ -113,7 +113,7 @@ class WebSoc:
             self.enrolled = webreg.enroll(webreg_browser, enroll_list)
 
     def main_routine(self):
-        soup = get_POST_results(self.URL, self.form_data)
+        soup = get_POST_as_soup(self.URL, self.form_data)
         if soup.find_all('li')[0].text == "Department: " + self.dept: #Checks if the post request retrieved the right data
             course_status = self.check_courses(soup)
             enroll_list = self.get_enroll_list(course_status)
@@ -132,7 +132,7 @@ class WebSoc:
                 self.courses.remove(i)
         return len(self.courses) == 0
 
-def get_POST_results(URL, form_data) -> BeautifulSoup:
+def get_POST_as_soup(URL, form_data) -> BeautifulSoup:
     ''' Sends POST request to URL and returns retrived content in parsed form '''
     request = requests.post(URL, form_data)
     soup = BeautifulSoup(request.content, "html.parser")
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     dept = "PHILOS"
     test = WebSoc(dept, [['30500', '30503'], ['30640']], "#####", "#####")
     try:
-        soup = get_POST_results()
+        soup = get_POST_results(test.URL, test.form_data)
         if soup.find_all('li')[0].text == "Department: " + dept:
             for i in range(40):
                 test.check_courses(soup)
