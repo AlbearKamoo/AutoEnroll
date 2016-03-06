@@ -37,7 +37,6 @@ class WebSoc:
          }
 
         # Object attributes assigned to initialization input
-        self.courses = courses
         self.dept = dept
 
         # Internal object attributes with default values
@@ -60,61 +59,41 @@ class WebSoc:
                 
             # Builds the course status dictionary with user specified courses and their status
             for i in course_list:
-                if i[0].text in itertools.chain.from_iterable([x.get_course_as_list() for x in self.courses]):
+                if i[0].text in itertools.chain.from_iterable([x.get_course_as_list() for x in courses]):
                     course_status[i[0].text] = i[-1].text
         else:
             print("POST request failed to retrieve correct data. Please contact an administrator =p")
             
         # Return dictionary of course codes as keys and their availability as values
-        return course_status
+        return course_status 
 
-    def get_enroll_list(self) -> [[str]]:
+           
+    def get_enroll_list(self, courses, course_status = {}) -> [[str]]:
         ''' Builds a list of enrollable (OPEN) courses, mainting course/discussion
         relationships through sublists, and returns it.
 
         keyword arguments:
+        courses -- a list of Course objects
         class_status -- a dictionary with course codes as keys and their enrollment status as values
         '''
-        course_status = self.get_course_status()
         enroll_list = []
-        if course_status:
-            # Builds a list that cointains courses specified by the user that are open for enrollment
-            for l in self.courses:
-                if course_status[l.lecture_code] == 'OPEN':
-                    if l.auxiliary_codes:
-                        for c in l.auxiliary_codes:
-                            if course_status[c] == 'OPEN':
-                                enroll_list.append(l)
-                                break
-                    else:
-                        enroll_list.append(l)                                  
+        if course_status == None or len(course_status) == 0:
+            course_status = self.get_course_status(courses)
+        
+        # Builds a list that cointains courses specified by the user that are open for enrollment
+        for l in courses:
+            if course_status[l.lecture_code] == 'OPEN':
+                if l.auxiliary_codes:
+                    for c in l.auxiliary_codes:
+                        if course_status[c] == 'OPEN':
+                            enroll_list.append(l)
+                            break
+                else:
+                    enroll_list.append(l)                                  
                     
         print("Courses OPEN for enrollment: "+str(enroll_list)) # Print statement for debugging purposes
         
-        return enroll_list 
-
-    # Overloaded method with an external course dictionary         
-    def get_enroll_list(self, course_status: dict) -> [[str]]:
-        ''' Builds a list of enrollable (OPEN) courses, mainting course/discussion
-        relationships through sublists, and returns it.
-
-        keyword arguments:
-        class_status -- a dictionary with course codes as keys and their enrollment status as values
-        '''
-
-        # Builds a list that cointains courses specified by the user that are open for enrollment
-        enroll_list = []
-        for l in self.courses:
-            if course_status[l[0]] == 'OPEN':
-                if len(l) == 1:
-                    enroll_list.append(l)
-                for c in range(1, len(l)):
-                    if course_status[l[c]] == 'OPEN':
-                        enroll_list.append(l)
-                        break
-        print("Courses OPEN for enrollment: "+str(enroll_list)) # Print statement for debugging purposes
-
-        return enroll_list                           
+        return enroll_list                          
 
 def get_POST_as_soup(URL, form_data) -> BeautifulSoup:
     ''' Sends POST request to URL and returns retrived content in parsed form '''

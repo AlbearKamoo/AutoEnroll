@@ -93,7 +93,7 @@ class Legacy:
         self.session_link = ''
         return False
 
-    def enroll(self, courselist: [[str]]) -> []:
+    def enroll(self, course_list: []) -> []:
         '''
         Starting from the WebReg Main Menu:
             User will be entering Enrollment Menu and this will register for user's specified classes
@@ -115,9 +115,9 @@ class Legacy:
                          'mode' : 'enrollmentMenu',
                          'call' : self.session_id}
 
-        print('enrolling')
+        print('Enrolling')
         x = self.session.post(self.session_link, data=enroll_button)
-        for course in self.courselist:
+        for course in course_list:
 
             #Use this variable to check if we wanna add the course to the "enrolled class list"
             is_enrolled = False
@@ -136,12 +136,12 @@ class Legacy:
             if('studyList' in str(enrollment_response.content)):
                 print('Successfully Enrolled In Lecture : ' + course.lecture_code)
 
-            for discussion_id in course.auxiliary_codes:
+            for discussion_code in course.auxiliary_codes:
                 join_class = {'page' : 'enrollmentMenu',
                               'call' : self.session_id,
                               'mode' : 'add',
                               'button' : 'Send Request',
-                              'courseCode' : course.lecture_code,
+                              'courseCode' : discussion_code,
                               'gradeOption' : '',
                               'varUnits' : '',
                               'authCode' : ''}
@@ -155,8 +155,6 @@ class Legacy:
 
             if(is_enrolled):
                 self.enrolled_classes.append(course)
-
-
 
         return self.enrolled_classes
         print('Enrollment Complete')

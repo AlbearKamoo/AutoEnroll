@@ -8,7 +8,6 @@ from PyQt5.QtCore import *
 from course import Course
 import sender
 import websoc
-import webreg
 import legacy
 
 
@@ -290,7 +289,7 @@ class Main(QWidget):
           in, or until the user terminates the app.
           '''
           
-          # Gets a list of lists of course codes from a helper method
+          # Gets a list of lists of Course objects from user input
           course_list = self.build_course_list()
 
           # Gets the department form value using the user's selected department as the key for the global department dictionary
@@ -305,27 +304,38 @@ class Main(QWidget):
                print(c)
           
           try:
-               # Initiates WebSoc handler object with enrollment list and user data
+               # Initiates WebSoc handler object with chosen course department
                websoc_bot = websoc.WebSoc(dept)
-               webreg_bot = legacy.Legacy(self.username, self.password)
+               # Initiates WebReg enrollment handler with user data and logs on
+               enroll_bot = legacy.Legacy(self.username, self.password)
+               enroll_bot.login()
                self.close() # Closes Main window and leaves bot running in background
-
+               
                # MAIN ROUTINE: continously checks course status until course list is empty
-               while enroll_bot.check_enrolled() == False:
+               enrolled_courses = []
+               while course_list:
                     if self.time_check.isChecked() == False or datetime.now() > enroll_datetime:
-                         enroll_bot.main_routine()
-                         sleep(10)
-                         print('Rechecking')
-                         if self.email.isChecked() and enroll_bot.enrolled:
+                         enroll_list = websoc_bot.get_enroll_list(course_list)
+                         if enroll_list:
+                              enrolled_courses = enroll_bot.enroll(enroll_list)
+                         if self.email_check.isChecked() and enrolled_courses:
                               message = ''
-                              for ld in enroll_bot.enrolled:
-                                   for c in ld:
-                                        message += "Successfully enrolled in " + c + "\n"
+                              for course in enrolled_courses:
+                                   message += "Successfully enrolled in lecture: " + course.lecture_code + "\n"
+                                   for c in course.auxiliary_codes:
+                                        message += "Successfully enrolled in discussions/labs: " + course.lecture_code + "\n"
+                                        
                               mailbot = sender.default_sender()
                               mailbot.send_email(message, self.username +"@uci.edu", 'AutoEnroll Notification')
+                         course_list = enroll_bot.remove_enrolled_courses(course_list)
+                         sleep(10)
+                         print('Rechecking')
                     else:
                          print("Enrollment is set to begin at "+self.enroll_time.text())
                          sleep(60)
+               
+               print("Enrollment complete!")
+               enroll_bot.logout()
                     
           except Exception as e:
               print(e)
@@ -411,12 +421,13 @@ class LoginWindow(QWidget):
           username = str(self.username_input.text())
           password = str(self.password_input.text())
           try:
-               browser = webreg.login(username, password)
-               if webreg.login_check(browser):
+               login_bot = legacy.Legacy(username, password)
+               if login_bot.login():
                     # Starts main window and brings it to the front. Closes login window
                     self.main_window = Main(username, password)
                     self.main_window.show()
                     self.main_window.activateWindow()
+                    login_bot.logout()
                     self.close()
                else:
                     QMessageBox.about(self, "Invalid login", "The username and password combination you have entered is invalid. Please try again.")
@@ -442,10 +453,10 @@ def QTime_to_datetime(qtime: QTimeEdit) -> datetime:
 if __name__ == '__main__':
      app = QApplication(sys.argv)
 
-     #login_window = LoginWindow()
-     #login_window.show()
-     main_window = Main('john', 'abba')
-     main_window.show()
+     login_window = LoginWindow()
+     login_window.show()
+     #main_window = Main('john', 'abba')
+     #main_window.show()
      
 
      sys.exit(app.exec_())
