@@ -135,6 +135,8 @@ class Legacy:
             #checks if we successfully enrolled in the lecture
             if('studyList' in str(enrollment_response.content)):
                 print('Successfully Enrolled In Lecture : ' + course.lecture_code)
+                if(len(course.auxiliary_codes) == 0):
+                    is_enrolled = True
 
             for discussion_code in course.auxiliary_codes:
                 join_class = {'page' : 'enrollmentMenu',
