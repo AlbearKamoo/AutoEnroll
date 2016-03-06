@@ -1,10 +1,7 @@
-# Byte-compiled / optimized / DLL files
+# Ignore pycache
 __pycache__/*
-*.pyc
-*.py[cod]
-*$py.class
 
-# Ignore sender
+# Ignore sender module
 /sender.py
 
 #IntelliJ project files
